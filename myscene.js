@@ -68,6 +68,7 @@ class myScene extends Phaser.Scene {
 		this.waterText = this.add.text(32, 64);
 		this.waterText.setFontSize(30).setColor("#0000bb");
 		this.waterText.setText("Water: 0/100");
+		this.waterText.depth = this.timeText.depth = 10;
 		
 		this.waterLeft = 0;
 		this.waterMax = 1000;
@@ -99,10 +100,12 @@ class myScene extends Phaser.Scene {
 		this.platforms = this.map.createDynamicLayer("platforms", [terrain], 0, 0);
 		this.plantLayer = this.map.createDynamicLayer("plants", [terrain], 0, 0);
 		this.waterLayer = this.map.createDynamicLayer("water", [terrain], 0, 0);
+		this.backgroundLayer = this.map.createStaticLayer("background", [terrain], 0, 0);
 		var scale = 0.5;
 		this.platforms.setScale(scale);
 		this.plantLayer.setScale(scale);
 		this.waterLayer.setScale(scale);
+		this.backgroundLayer.setScale(scale);
 		this.plants = this.physics.add.staticGroup();
 		this.levelWon = false;
 		this.platforms.setCollisionBetween(1, 1000);
@@ -110,11 +113,13 @@ class myScene extends Phaser.Scene {
 		
 		this.plantLayer.forEachTile(tile => {
 			if (tile.properties.plant) {
-				var plant = this.physics.add.sprite(tile.getCenterX(), tile.getCenterY() - 10, "woodSheet", 1);
+				var plant = this.physics.add.sprite(tile.getCenterX(), tile.getCenterY() - 10, "woodSheet", tile.index);
+				plant.baseIndex = tile.index;
 				plant.body.setAllowGravity(false);
 				//plant.setScale(scale);
-				plant.water = 0;
-				plant.targetWater = 100;
+				plant.water = tile.properties.startwater || 0;
+				plant.targetWater = tile.properties.targetwater || 100;
+				plant.loseWater = tile.properties.losewater || 0;
 				plant.graphics = this.add.graphics({x: tile.getCenterX(), y: tile.getCenterY()});
 				this.plants.add(plant);
 				this.plantLayer.removeTileAt(tile.x, tile.y);
@@ -127,26 +132,7 @@ class myScene extends Phaser.Scene {
 				for (var p of scene.plants.children.entries) {
 					if (p.body.hitTest(x,y) && p.water < p.targetWater) {
 						console.log(p, "received water drop");
-						var gaugeHeight = 40;
-						var gaugeWidth = 10;
-						
 						p.water += 1;
-						p.graphics.clear();
-						p.graphics.beginPath();
-						p.graphics.lineStyle(gaugeWidth, "#000000", 1.0);
-						p.graphics.beginPath();
-						p.graphics.moveTo(-10, 5);
-						p.graphics.lineTo(-10, 5 - gaugeHeight)
-						p.graphics.strokePath();
-						p.graphics.closePath();
-						
-						p.graphics.beginPath();
-						p.graphics.lineStyle(gaugeWidth - 2, getColorScale(p.water / p.targetWater), 1.0);
-						p.graphics.beginPath();
-						p.graphics.moveTo(-10, 4);
-						p.graphics.lineTo(-10, 4 - (p.water / p.targetWater) * (gaugeHeight - 2))
-						p.graphics.strokePath();
-						p.graphics.closePath();
 						if (p.water >= p.targetWater) {
 							p.setFrame(p.frame.name + 1);
 							if (scene.plants.children.entries.filter(a => a.water < a.targetWater).length === 0) {
@@ -203,7 +189,34 @@ class myScene extends Phaser.Scene {
 		function t(th) {
 			return time - th.startTime;
 		}
-		
+		this.plants.children.entries.forEach(p => {
+			if (p.water < p.targetWater)
+				p.water -= p.loseWater * (delta / 1000);
+			p.water = Math.max(0, p.water);
+			p.water = Math.min(p.targetWater, p.water);
+			var gaugeHeight = 40;
+			var gaugeWidth = 10;
+			
+			
+			p.graphics.clear();
+			p.graphics.beginPath();
+			p.graphics.lineStyle(gaugeWidth, "#000000", 1.0);
+			p.graphics.beginPath();
+			p.graphics.moveTo(-25, 5);
+			p.graphics.lineTo(-25, 5 - gaugeHeight)
+			p.graphics.strokePath();
+			p.graphics.closePath();
+			
+			p.graphics.beginPath();
+			p.graphics.lineStyle(gaugeWidth - 2, getColorScale(p.water / p.targetWater), 1.0);
+			p.graphics.beginPath();
+			p.graphics.moveTo(-25, 4);
+			p.graphics.lineTo(-25, 4 - (p.water / p.targetWater) * (gaugeHeight - 2))
+			p.graphics.strokePath();
+			p.graphics.closePath();
+			var currFrame = Math.ceil((p.water / p.targetWater) * 4);
+			p.setFrame(p.baseIndex + currFrame - 1);
+		});
 		var groundAccel = GROUND_ACCEL / ((50 + this.waterLeft) / 100);
 		this.player.body.setMaxVelocity(Math.min(GROUND_MAXSPEED, groundAccel), FALL_MAXSPEED);
 		var jumpStr = Math.min(JUMP_STR, groundAccel * 1);
