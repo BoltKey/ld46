@@ -40,13 +40,22 @@ class myScene extends Phaser.Scene {
 			"woodSheet",
 			"assets/tileset.png",
 			{
+				frameWidth: 20,
+				frameHeight: 20,
+				margin: 0, 
+				spacing: 0
+			}	
+		);
+		this.load.spritesheet(
+			"plantSheet",
+			"assets/plants.png",
+			{
 				frameWidth: 40,
 				frameHeight: 40,
 				margin: 0, 
 				spacing: 0
 			}	
 		);
-		
 		
 	};
 	
@@ -120,23 +129,24 @@ class myScene extends Phaser.Scene {
 		this.plantLayer = this.map.createDynamicLayer("plants", [terrain], 0, 0);
 		this.waterLayer = this.map.createDynamicLayer("water", [terrain], 0, 0);
 		this.backgroundLayer = this.map.createStaticLayer("background", [terrain], 0, 0);
-		var scale = 0.5;
+		var scale = 1;
 		this.platforms.setScale(scale);
 		this.plantLayer.setScale(scale);
 		this.waterLayer.setScale(scale);
 		this.backgroundLayer.setScale(scale);
 		this.plants = this.physics.add.staticGroup();
 		this.levelWon = false;
+		this.levelLost = false;
 		this.platforms.setCollisionBetween(1, 1000);
 		this.physics.add.collider(this.platforms, this.player);
 		
 		this.plantLayer.forEachTile(tile => {
 			if (tile.properties.plant) {
-				var plant = this.physics.add.sprite(tile.getCenterX(), tile.getCenterY() - 10, "woodSheet", tile.index);
-				plant.baseIndex = tile.index;
+				var plant = this.physics.add.sprite(tile.getCenterX(), tile.getCenterY() - 10, "plantSheet", 0);
+				plant.baseIndex = 0;
 				plant.body.setAllowGravity(false);
 				//plant.setScale(scale);
-				plant.water = tile.properties.startwater || 0;
+				plant.water = tile.properties.startwater || 10;
 				plant.targetWater = tile.properties.targetwater || 100;
 				plant.loseWater = tile.properties.losewater || 0;
 				plant.graphics = this.add.graphics({x: tile.getCenterX(), y: tile.getCenterY()});
@@ -149,7 +159,7 @@ class myScene extends Phaser.Scene {
 		var source = {
 			contains: function(x, y) {
 				for (var p of scene.plants.children.entries) {
-					if (p.body.hitTest(x,y) && p.water < p.targetWater) {
+					if (p.body.hitTest(x,y) && p.water < p.targetWater && p.water > 0) {
 						console.log(p, "received water drop");
 						p.water += 1;
 						if (p.water >= p.targetWater) {
@@ -213,6 +223,10 @@ class myScene extends Phaser.Scene {
 				p.water -= p.loseWater * (delta / 1000);
 			p.water = Math.max(0, p.water);
 			p.water = Math.min(p.targetWater, p.water);
+			if (p.water === 0 && !this.levelLost) {
+				this.levelLost = true;
+				scene.add.text(100, 100, "you losed :(((((\n rip in peperon \n press [R]estart", {fontSize: "60px", color: "#ff0000"});
+			}
 			var gaugeHeight = 40;
 			var gaugeWidth = 10;
 			
@@ -233,8 +247,8 @@ class myScene extends Phaser.Scene {
 			p.graphics.lineTo(-25, 4 - (p.water / p.targetWater) * (gaugeHeight - 2))
 			p.graphics.strokePath();
 			p.graphics.closePath();
-			var currFrame = Math.ceil((p.water / p.targetWater) * 4);
-			p.setFrame(p.baseIndex + currFrame - 1);
+			var currFrame = Math.floor((p.water / p.targetWater) * 3);
+			p.setFrame(p.baseIndex + currFrame+1);
 		});
 		var groundAccel = GROUND_ACCEL / ((50 + this.waterLeft) / 100);
 		this.player.body.setMaxVelocity(Math.min(GROUND_MAXSPEED, groundAccel), FALL_MAXSPEED);
