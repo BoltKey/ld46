@@ -52,7 +52,7 @@ class myScene extends Phaser.Scene {
 		this.waterText.setFontSize(30).setColor("#0000bb");
 		this.waterText.setText("Water: 0/100");
 		
-		this.waterLeft = 1000;
+		this.waterLeft = 0;
 		this.waterMax = 1000;
 		
 		this.replayData = [];
@@ -83,10 +83,13 @@ class myScene extends Phaser.Scene {
 		let terrain = this.map.addTilesetImage("wood", "woodset");
 		this.platforms = this.map.createDynamicLayer("platforms", [terrain], 0, 0);
 		this.plantLayer = this.map.createDynamicLayer("plants", [terrain], 0, 0);
+		this.waterLayer = this.map.createDynamicLayer("water", [terrain], 0, 0);
 		var scale = 0.5;
 		this.platforms.setScale(scale);
 		this.plantLayer.setScale(scale);
+		this.waterLayer.setScale(scale);
 		this.plants = this.physics.add.staticGroup();
+		this.levelWon = false;
 		this.platforms.setCollisionBetween(1, 1000);
 		this.physics.add.collider(this.platforms, this.player);
 		
@@ -102,6 +105,7 @@ class myScene extends Phaser.Scene {
 			}
 		});
 		
+		
 		var source = {
 			contains: function(x, y) {
 				for (var p of scene.plants.children.entries) {
@@ -110,20 +114,42 @@ class myScene extends Phaser.Scene {
 						p.water += 1;
 						if (p.water >= p.targetWater) {
 							p.setFrame(p.frame.name + 1);
+							if (scene.plants.children.entries.filter(a => a.water < a.targetWater).length === 0) {
+								scene.levelWon = true;
+								scene.add.text(100, 100, "VICTORY!!!!11!one!", {fontSize: "60px", color: "#ff0000"});
+							}
 						}
 						return p;
+					}
+					var pos = scene.player.body.position;
+					if (x > pos.x + 15 && x < pos.x + 25 && y > pos.y + 10 && y < pos.y + 15 && scene.waterLeft < scene.waterMax) {
+						console.log("caught water");
+						scene.waterLeft += 1;
+						return true;
 					}
 				}
 				return false;
 				
 			}
 		}
+		
 		this.waterParticles = this.add.particles("water");
-		this.waterEmitter = this.waterParticles.createEmitter({
+		var config = {
 			lifespan: 10000,
 			gravityY: 300,
-			quantity: 10,
+			quantity: 2,
+			speedX: {min: -10, max: 10},
+			speedY: {min: -3, max: 3},
 			deathZone: {type: "onEnter", source: source}
+		};
+		this.waterEmitter = this.waterParticles.createEmitter(config);
+		
+		this.waterLayer.forEachTile(tile => {
+			if (tile.properties.watersource) {
+				var emitter = this.waterParticles.createEmitter(config);
+				emitter.setFrequency(1, tile.properties.watersource);
+				emitter.setPosition(tile.getCenterX(), tile.getCenterY());
+			}
 		});
 		
 		
@@ -143,15 +169,17 @@ class myScene extends Phaser.Scene {
 		}
 		var groundAccel = GROUND_ACCEL / ((50 + this.waterLeft) / 100);
 		this.player.body.setMaxVelocity(Math.min(GROUND_MAXSPEED, groundAccel), FALL_MAXSPEED);
+		var jumpStr = Math.min(JUMP_STR, groundAccel * 1);
 		var string;
-		if (t(this) > 0) {
-			string = Math.floor(t(this) / 1000) + "." + Math.floor(Math.abs(t(this))) % 1000 + "s";
+		if (!this.levelWon) {
+			if (t(this) > 0) {
+				string = Math.floor(t(this) / 1000) + "." + Math.floor(Math.abs(t(this))) % 1000 + "s";
+			}
+			else {
+				string = Math.ceil(-t(this) / 1000 * 3);
+			}
+			this.timeText.setText(string);
 		}
-		else {
-			string = Math.ceil(-t(this) / 1000 * 3);
-		}
-		
-		this.timeText.setText(string);
 		if (!this.startTime) {
 			this.startTime = time + 1000;
 		}
@@ -187,19 +215,20 @@ class myScene extends Phaser.Scene {
 			var drops = Math.ceil(this.waterLeft / 100);
 			this.waterLeft -= drops;
 			console.log("watering " + drops + " drops");
-			this.waterText.setText("Water: " + this.waterLeft + "/" + this.waterMax);
+			
 			this.waterEmitter.setFrequency(1, drops);
 			this.waterEmitter.start();
 		}
 		else {
 			this.waterEmitter.stop();
 		}
+		this.waterText.setText("Water: " + this.waterLeft + "/" + this.waterMax);
 		
 		//touch = this.player.body.blocked;
 		
 		if (this.key_UP.isDown) {
 			if (touch.down) {
-				this.player.setVelocityY(-JUMP_STR);
+				this.player.setVelocityY(-jumpStr);
 				this.player.anims.play("player-jump", true);
 				//this.audio.jump.play();
 				this.jumpStart = true;
