@@ -70,6 +70,24 @@ class myScene extends Phaser.Scene {
 		this.waterText.setText("Water: 0/100");
 		this.waterText.depth = this.timeText.depth = 10;
 		
+		this.anims.create({
+			key: "run",
+			frames: this.anims.generateFrameNumbers("player", {start: 2, end: 3}),
+			frameRate: 10,
+			repeat: -1
+		});
+		this.anims.create({
+			key: "jump",
+			frames: this.anims.generateFrameNumbers("player", {start: 10, end: 10}),
+			frameRate: 3,
+			repeat: -1
+		});
+		this.anims.create({
+			key: "idle",
+			frames: this.anims.generateFrameNumbers("player", {start: 0, end: 1}),
+			frameRate: 3,
+			repeat: -1
+		});
 		this.waterLeft = 0;
 		this.waterMax = 1000;
 		
@@ -291,7 +309,7 @@ class myScene extends Phaser.Scene {
 		if (this.key_UP.isDown) {
 			if (touch.down) {
 				this.player.setVelocityY(-jumpStr);
-				this.player.anims.play("player-jump", true);
+				this.player.anims.play("jump", true);
 				//this.audio.jump.play();
 				this.jumpStart = true;
 			}
@@ -308,7 +326,7 @@ class myScene extends Phaser.Scene {
 		else {
 			this.player.setAccelerationY(0);
 			if (touch.down && this.player.body.velocity.x !== 0) {
-				//this.player.anims.play("player-run", true);
+				this.player.anims.play("run", true);
 				
 			}
 			else if (!touch.down) {
@@ -318,7 +336,7 @@ class myScene extends Phaser.Scene {
 		}
 		if (touch.down) {
 			if (this.player.body.velocity.x === 0 && !this.jumpStart) {
-				//this.player.anims.play("player-idle", true);
+				this.player.anims.play("idle", true);
 			}
 		}
 		if (this.key_RIGHT.isDown && !touch.right && this.player.body.velocity.x >= 0) {

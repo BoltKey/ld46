@@ -85,7 +85,7 @@
                         {
                          "name":"startwater",
                          "type":"int",
-                         "value":50
+                         "value":150
                         }, 
                         {
                          "name":"targetwater",
@@ -118,7 +118,7 @@
                         {
                          "name":"startwater",
                          "type":"int",
-                         "value":10
+                         "value":60
                         }, 
                         {
                          "name":"targetwater",
