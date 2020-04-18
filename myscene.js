@@ -34,6 +34,7 @@ class myScene extends Phaser.Scene {
 		this.load.tilemapTiledJSON("level" + this.levelNo, "levels/level" + this.levelNo + ".json");
 		this.load.image("woodset", "assets/tileset.png");
 		this.load.image("water", "assets/water.png");
+		this.load.image("background", "assets/background1.png");
 		
 		this.load.spritesheet(
 			"woodSheet",
@@ -61,7 +62,7 @@ class myScene extends Phaser.Scene {
 		console.log(this.levelNo);
 		
 		scene = this;
-		
+		this.backgroundImage = this.add.image(0, 0, "background").setOrigin(0, 0);
 		this.timeText = this.add.text(32, 32);
 		this.timeText.setFontSize(30).setColor("#000000");
 		
