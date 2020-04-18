@@ -1,18 +1,25 @@
-const GROUND_ACCEL = 1400;
+const GROUND_ACCEL = 800;
 const SKY_ACC_RATIO = 0.5;
-const GROUND_MAXSPEED = 150;
+const GROUND_MAXSPEED = 230;
 const FALL_MAXSPEED = 1000;
-const DRAG = 1300;
+const DRAG = 1800;
 const JUMP_STR = 250;
+var scene;
 class myScene extends Phaser.Scene {
 	constructor() {
 		super();
 	}
 	
 	preload() {
-		this.load.image("player", "assets/player.png");
+		this.load.spritesheet("player", "assets/player.png", {
+			frameWidth: 40,
+			frameHeight: 40,
+			margin: 0,
+			spacing: 0
+		});
 		this.load.tilemapTiledJSON("level" + this.levelNo, "levels/level" + this.levelNo + ".json");
 		this.load.image("woodset", "assets/tileset.png");
+		this.load.image("water", "assets/water.png");
 		
 		this.load.spritesheet(
 			"woodSheet",
@@ -33,20 +40,32 @@ class myScene extends Phaser.Scene {
 	}
 	
 	create() {
+		
 		console.log(this.levelNo);
 		
+		scene = this;
+		
 		this.timeText = this.add.text(32, 32);
-		this.timeText.setFontSize(30);
+		this.timeText.setFontSize(30).setColor("#000000");
+		
+		this.waterText = this.add.text(32, 64);
+		this.waterText.setFontSize(30).setColor("#0000bb");
+		this.waterText.setText("Water: 0/100");
+		
+		this.waterLeft = 1000;
+		this.waterMax = 1000;
 		
 		this.replayData = [];
 		
 		this.startTime = false;
 		
 		
+		
+		
 		this.jumpStart = false;
 		
 		this.doubleJumpAvailable = true;
-		this.player = this.physics.add.sprite(100, 20, "player").setOrigin(0.5);
+		this.player = this.physics.add.sprite(100, 20, "player", 0).setOrigin(0.5);
 		this.bestTime = 0;
 		
 		this.replayIndex = 0;
@@ -60,25 +79,70 @@ class myScene extends Phaser.Scene {
 		
 		this.player.setCollideWorldBounds(true);
 		
+		this.map = this.add.tilemap("level" + this.levelNo);
+		let terrain = this.map.addTilesetImage("wood", "woodset");
+		this.platforms = this.map.createDynamicLayer("platforms", [terrain], 0, 0);
+		this.plantLayer = this.map.createDynamicLayer("plants", [terrain], 0, 0);
+		var scale = 0.5;
+		this.platforms.setScale(scale);
+		this.plantLayer.setScale(scale);
+		this.plants = this.physics.add.staticGroup();
+		this.platforms.setCollisionBetween(1, 1000);
+		this.physics.add.collider(this.platforms, this.player);
+		
+		this.plantLayer.forEachTile(tile => {
+			if (tile.properties.plant) {
+				var plant = this.physics.add.sprite(tile.getCenterX(), tile.getCenterY(), "woodSheet", 1);
+				plant.body.setAllowGravity(false);
+				plant.setScale(scale);
+				plant.water = 0;
+				plant.targetWater = 100;
+				this.plants.add(plant);
+				this.plantLayer.removeTileAt(tile.x, tile.y);
+			}
+		});
+		
+		var source = {
+			contains: function(x, y) {
+				for (var p of scene.plants.children.entries) {
+					if (p.body.hitTest(x,y) && p.water < p.targetWater) {
+						console.log(p, "received water drop");
+						p.water += 1;
+						if (p.water >= p.targetWater) {
+							p.setFrame(p.frame.name + 1);
+						}
+						return p;
+					}
+				}
+				return false;
+				
+			}
+		}
+		this.waterParticles = this.add.particles("water");
+		this.waterEmitter = this.waterParticles.createEmitter({
+			lifespan: 10000,
+			gravityY: 300,
+			quantity: 10,
+			deathZone: {type: "onEnter", source: source}
+		});
+		
 		
 		this.key_RIGHT = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.RIGHT);
 		this.key_LEFT = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.LEFT);
 		this.key_UP = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.UP);
 		this.key_R = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.R);
+		this.key_SPACE = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
 		
 		
-		this.map = this.add.tilemap("level" + this.levelNo);
-		let terrain = this.map.addTilesetImage("wood", "woodset");
-		this.platforms = this.map.createDynamicLayer("platforms", [terrain], 0, 0);
-		this.platforms.setScale(0.5);
-		this.platforms.setCollisionBetween(1, 1000);
-		this.physics.add.collider(this.platforms, this.player);
+		
 	}
 	
 	update(time, delta) {
 		function t(th) {
 			return time - th.startTime;
 		}
+		var groundAccel = GROUND_ACCEL / ((50 + this.waterLeft) / 100);
+		this.player.body.setMaxVelocity(Math.min(GROUND_MAXSPEED, groundAccel), FALL_MAXSPEED);
 		var string;
 		if (t(this) > 0) {
 			string = Math.floor(t(this) / 1000) + "." + Math.floor(Math.abs(t(this))) % 1000 + "s";
@@ -117,6 +181,20 @@ class myScene extends Phaser.Scene {
 		for (var d of ["up", "down", "left", "right"]) {
 			touch[d] = this.player.body.blocked[d];
 		}
+		
+		if (this.key_SPACE.isDown && this.waterLeft > 0) {
+			
+			var drops = Math.ceil(this.waterLeft / 100);
+			this.waterLeft -= drops;
+			console.log("watering " + drops + " drops");
+			this.waterText.setText("Water: " + this.waterLeft + "/" + this.waterMax);
+			this.waterEmitter.setFrequency(1, drops);
+			this.waterEmitter.start();
+		}
+		else {
+			this.waterEmitter.stop();
+		}
+		
 		//touch = this.player.body.blocked;
 		
 		if (this.key_UP.isDown) {
@@ -157,16 +235,16 @@ class myScene extends Phaser.Scene {
 				//this.player.anims.play("player-idle", true);
 			}
 		}
-		if (this.key_RIGHT.isDown && !touch.right) {
-			this.player.setAccelerationX(GROUND_ACCEL);
+		if (this.key_RIGHT.isDown && !touch.right && this.player.body.velocity.x >= 0) {
+			this.player.setAccelerationX(groundAccel);
 			if (!touch.down) {
-				this.player.setAccelerationX(GROUND_ACCEL * SKY_ACC_RATIO);
+				this.player.setAccelerationX(groundAccel * SKY_ACC_RATIO);
 			}
 		}
-		else if (this.key_LEFT.isDown && !touch.left) {
-			this.player.setAccelerationX(-GROUND_ACCEL);
+		else if (this.key_LEFT.isDown && !touch.left && this.player.body.velocity.x <= 0) {
+			this.player.setAccelerationX(-groundAccel);
 			if (!touch.down) {
-				this.player.setAccelerationX(-GROUND_ACCEL * SKY_ACC_RATIO);
+				this.player.setAccelerationX(-groundAccel * SKY_ACC_RATIO);
 			}
 		}
 		else {
@@ -176,5 +254,8 @@ class myScene extends Phaser.Scene {
 				this.player.setDragX(DRAG * SKY_ACC_RATIO);
 			}
 		}
+		this.waterEmitter.setPosition(this.player.body.position.x + (this.player.flipX ? 5 : 35), this.player.body.position.y + 10);
+		this.waterEmitter.setSpeedX({ min: this.player.body.velocity.x - 10, max: this.player.body.velocity.x + 10 });
+		this.waterEmitter.setSpeedY({ min: this.player.body.velocity.y - 10, max: this.player.body.velocity.y + 10 });
 	}
 }
