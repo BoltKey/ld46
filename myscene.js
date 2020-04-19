@@ -85,7 +85,7 @@ class myScene extends Phaser.Scene {
 		this.replayIndex = 0;
 		
 		this.player.setMaxVelocity(GROUND_MAXSPEED, FALL_MAXSPEED).
-		setSize(40, 40);
+		setSize(38, 38);
 		this.player.body.setAllowGravity(true);
 		
 		this.player.displayOriginX = 0.5; 
@@ -112,8 +112,9 @@ class myScene extends Phaser.Scene {
 		
 		this.plantLayer.forEachTile(tile => {
 			if (tile.properties.plant) {
-				var plant = this.physics.add.sprite(tile.getCenterX(), tile.getCenterY() - 10, "plantSheet", 0);
-				plant.baseIndex = 0;
+				var baseIndex = (tile.properties.plant - 1) * 5;
+				var plant = this.physics.add.sprite(tile.getCenterX(), tile.getCenterY() - 10, "plantSheet", baseIndex);
+				plant.baseIndex = baseIndex;
 				plant.body.setAllowGravity(false);
 				//plant.setScale(scale);
 				plant.water = tile.properties.startwater || 10;
@@ -121,8 +122,13 @@ class myScene extends Phaser.Scene {
 				plant.loseWater = tile.properties.losewater || 0;
 				plant.graphics = this.add.graphics({x: tile.getCenterX(), y: tile.getCenterY()});
 				this.plants.add(plant);
-				this.plantLayer.removeTileAt(tile.x, tile.y);
+				
 			}
+			else if (tile.properties.player) {
+				this.player.setPosition(tile.getCenterX(), tile.getCenterY());
+			}
+			
+			this.plantLayer.removeTileAt(tile.x, tile.y);
 		});
 		
 		
@@ -136,7 +142,7 @@ class myScene extends Phaser.Scene {
 							p.setFrame(p.frame.name + 1);
 							if (scene.plants.children.entries.filter(a => a.water < a.targetWater).length === 0) {
 								scene.levelWon = true;
-								scene.add.text(100, 100, "VICTORY!!!!11!one!", {fontSize: "60px", color: "#ff0000"});
+								scene.add.text(100, 100, "VICTORY!!!!11!one!\n press N for next level", {fontSize: "60px", color: "#ff0000"});
 								
 							}
 						}
@@ -179,6 +185,10 @@ class myScene extends Phaser.Scene {
 		this.key_UP = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.UP);
 		this.key_R = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.R);
 		this.key_N = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.N);
+		this.key_W = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.W);
+		this.key_A = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.A);
+		this.key_S = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.S);
+		this.key_D = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.D);
 		this.key_SPACE = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
 		this.input.keyboard.on("keydown-N", function() {this.scene.start("myScene", {level: this.levelNo + 1})}, this);
 		
@@ -222,6 +232,9 @@ class myScene extends Phaser.Scene {
 			p.graphics.strokePath();
 			p.graphics.closePath();
 			var currFrame = Math.floor((p.water / p.targetWater) * 3);
+			if (p.water === 0) {
+				currFrame -= 1;
+			}
 			p.setFrame(p.baseIndex + currFrame+1);
 		});
 		var groundAccel = GROUND_ACCEL / ((50 + this.waterLeft) / 100);
@@ -295,7 +308,7 @@ class myScene extends Phaser.Scene {
 		
 		//touch = this.player.body.blocked;
 		
-		if (this.key_UP.isDown) {
+		if (this.key_UP.isDown || this.key_W.isDown) {
 			if (touch.down) {
 				this.player.setVelocityY(-jumpStr);
 				this.player.anims.play("jump", true);
@@ -328,13 +341,13 @@ class myScene extends Phaser.Scene {
 				this.player.anims.play("idle", true);
 			}
 		}
-		if (this.key_RIGHT.isDown && !touch.right && this.player.body.velocity.x >= 0) {
+		if ((this.key_RIGHT.isDown || this.key_D.isDown) && !touch.right && this.player.body.velocity.x >= 0) {
 			this.player.setAccelerationX(groundAccel);
 			if (!touch.down) {
 				this.player.setAccelerationX(groundAccel * SKY_ACC_RATIO);
 			}
 		}
-		else if (this.key_LEFT.isDown && !touch.left && this.player.body.velocity.x <= 0) {
+		else if ((this.key_LEFT.isDown || this.key_A.isDown) && !touch.left && this.player.body.velocity.x <= 0) {
 			this.player.setAccelerationX(-groundAccel);
 			if (!touch.down) {
 				this.player.setAccelerationX(-groundAccel * SKY_ACC_RATIO);
