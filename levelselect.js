@@ -35,8 +35,14 @@ class levelSelect extends Phaser.Scene {
 				levelbutton.on('pointerdown', function(pointer) {
 					scene.scene.start("myScene", {level: lev});
 				});
+				
 			}(levelNo) );
 		}
+		var levelsButton = this.add.image(550, 150, 'button-big').setInteractive();
+		this.add.image(levelsButton.getCenter().x, levelsButton.getCenter().y, "Backtomenu");
+		levelsButton.on('pointerdown', function(pointer) {
+			this.scene.start("menuScene");
+		}, this);
 	}
 	
 	update(time, delta) {

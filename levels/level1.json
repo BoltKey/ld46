@@ -119,12 +119,17 @@
                         {
                          "name":"losewater",
                          "type":"float",
-                         "value":1.5
+                         "value":4.5
                         }, 
                         {
                          "name":"plant",
                          "type":"int",
                          "value":2
+                        }, 
+                        {
+                         "name":"startwater",
+                         "type":"int",
+                         "value":80
                         }]
                 }],
          "tilewidth":20

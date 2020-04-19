@@ -95,7 +95,7 @@ class myScene extends Phaser.Scene {
 		
 		this.map = this.add.tilemap("level" + this.levelNo);
 		let terrain = this.map.addTilesetImage("wood", "woodset");
-		this.platforms = this.map.createDynamicLayer("platforms", [terrain], 0, 0);
+		this.platforms = this.map.createStaticLayer("platforms", [terrain], 0, 0);
 		this.plantLayer = this.map.createDynamicLayer("plants", [terrain], 0, 0);
 		this.waterLayer = this.map.createDynamicLayer("water", [terrain], 0, 0);
 		this.backgroundLayer = this.map.createStaticLayer("background", [terrain], 0, 0);
