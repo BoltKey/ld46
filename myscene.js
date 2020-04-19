@@ -25,37 +25,7 @@ class myScene extends Phaser.Scene {
 	
 	preload() {
 		console.log("loading level scene");
-		this.load.spritesheet("player", "assets/player.png", {
-			frameWidth: 40,
-			frameHeight: 40,
-			margin: 0,
-			spacing: 0
-		});
 		this.load.tilemapTiledJSON("level" + this.levelNo, "levels/level" + this.levelNo + ".json");
-		this.load.image("woodset", "assets/tileset.png");
-		this.load.image("water", "assets/water.png");
-		this.load.image("background", "assets/background1.png");
-		
-		this.load.spritesheet(
-			"woodSheet",
-			"assets/tileset.png",
-			{
-				frameWidth: 20,
-				frameHeight: 20,
-				margin: 0, 
-				spacing: 0
-			}	
-		);
-		this.load.spritesheet(
-			"plantSheet",
-			"assets/plants.png",
-			{
-				frameWidth: 40,
-				frameHeight: 40,
-				margin: 0, 
-				spacing: 0
-			}	
-		);
 		
 	};
 	
@@ -208,7 +178,9 @@ class myScene extends Phaser.Scene {
 		this.key_LEFT = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.LEFT);
 		this.key_UP = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.UP);
 		this.key_R = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.R);
+		this.key_N = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.N);
 		this.key_SPACE = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
+		this.input.keyboard.on("keydown-N", function() {this.scene.start("myScene", {level: this.levelNo + 1})}, this);
 		
 		
 		
@@ -218,6 +190,8 @@ class myScene extends Phaser.Scene {
 		function t(th) {
 			return time - th.startTime;
 		}
+		if (!this.plants.children) 
+			return;
 		this.plants.children.entries.forEach(p => {
 			if (p.water < p.targetWater)
 				p.water -= p.loseWater * (delta / 1000);

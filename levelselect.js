@@ -18,6 +18,7 @@ class levelSelect extends Phaser.Scene {
 	
 	create() {
 		scene = this;
+		this.backgroundImage = this.add.image(0, 0, "levelselectBackground").setOrigin(0, 0);
 		for (var levelNo = 1; levelNo <= 20; ++levelNo) {
 			(function(level) {
 				var lev = level;

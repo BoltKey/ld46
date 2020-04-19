@@ -6,7 +6,7 @@ class menuScene extends Phaser.Scene {
 	
 	preload() {
 		console.log("making menu");
-		this.load.image("button-big", "assets/button_big.png");
+		
 	};
 	
 	init(data) {
@@ -14,6 +14,7 @@ class menuScene extends Phaser.Scene {
 	
 	create() {
 		var levelsButton = this.add.image(120, 400, 'button-big').setInteractive();
+		this.backgroundImage = this.add.image(0, 0, "menubackground").setOrigin(0, 0);
 		this.add.text(levelsButton.getCenter().x, levelsButton.getCenter().y, "Level select", {align: "center"}).setOrigin(0.5);
 		levelsButton.on('pointerdown', function(pointer) {
 			this.scene.start("levelSelect");
