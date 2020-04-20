@@ -2,7 +2,7 @@ var config = {
 	type: Phaser.AUTO,
 	width: 800,
 	height: 600,
-	backgroundColor: "#999999",
+	backgroundColor: "#663222",
 	physics: {
 		default: "arcade",
 		arcade: {
@@ -10,7 +10,7 @@ var config = {
 			debug: false
 		}
 	},
-	scene: [preloader, menuScene, levelSelect, myScene]
+	scene: [preloader, menuScene, levelSelect, myScene, credits]
 }
 
 const MEDAL_TIMES = [

@@ -97,7 +97,7 @@
                         {
                          "name":"targetwater",
                          "type":"int",
-                         "value":200
+                         "value":400
                         }]
                 }, 
                 {

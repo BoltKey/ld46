@@ -40,18 +40,26 @@ class myScene extends Phaser.Scene {
 	}
 	
 	create() {
+		AUDIO.menumusic.stop();
+		if (!AUDIO.levelmusic.isPlaying) {
+			AUDIO.levelmusic.play();
+		}
+		
 		this.bestTime = localStorage.getItem(GAME_PREF + this.levelNo);
 		console.log(this.levelNo);
 		
 		scene = this;
 		this.backgroundImage = this.add.image(0, 0, "background" + this.environmentNo).setOrigin(0, 0);
 		this.timeText = this.add.text(32, 32);
-		this.timeText.setFontSize(30).setColor("#000000");
+		this.timeText.setFontSize(30).setColor("#000000").setFontFamily("brothers");
+		
+		this.add.text(20, 550, "Level: " + this.levelNo, {fontFamily: "brothers", fontSize: "20px"});
+		
 		this.countDown = this.add.image(400, 300, "countdown");
 		this.countDown.setOrigin(0.5);
 		
 		this.messageText = this.add.text(0, 0);
-		this.messageText.setDepth(19);
+		this.messageText.setDepth(19).setFontFamily("brothers");
 		this.messagePost = this.add.image(0, 0, "msgbg");
 		this.messagePost.setOrigin(0.5).setDepth(18).setAlpha(0);
 		
@@ -62,8 +70,6 @@ class myScene extends Phaser.Scene {
 		}
 		
 		this.waterText = this.add.image(310, 20, "watertext");
-		/*this.waterText.setFontSize(30).setColor("#0000bb");
-		this.waterText.setText("Water: 0/100");*/
 		this.waterText.depth = this.timeText.depth = 10;
 		
 		this.anims.create({
@@ -81,7 +87,7 @@ class myScene extends Phaser.Scene {
 		this.anims.create({
 			key: "idle",
 			frames: this.anims.generateFrameNumbers("player", {start: 0, end: 1}),
-			frameRate: 3,
+			frameRate: 4,
 			repeat: -1
 		});
 		this.waterLeft = 0;
@@ -128,6 +134,10 @@ class myScene extends Phaser.Scene {
 					if (p.body.hitTest(x,y) && p.water < p.targetWater && p.water > 0) {
 						p.water += 1;
 						if (p.water >= p.targetWater) {
+							if (!p.soundPlayed) {
+								p.soundPlayed = true;
+								AUDIO["flower" + Math.floor(Math.random() * 3)].play();
+							}
 							p.setFrame(p.frame.name + 1);
 							if (scene.plants.children.entries.filter(a => a.water < a.targetWater).length === 0) {
 								scene.levelWon = true;
@@ -148,7 +158,6 @@ class myScene extends Phaser.Scene {
 				
 			}
 		}
-		
 		this.waterParticles = this.add.particles("water");
 		var config = {
 			lifespan: 10000,
@@ -156,7 +165,9 @@ class myScene extends Phaser.Scene {
 			quantity: 0,
 			speedX: {min: -10, max: 10},
 			speedY: {min: -3, max: 3},
-			deathZone: {type: "onEnter", source: source}
+			frame: [0, 1, 2, 3],
+			deathZone: {type: "onEnter", source: source},
+			//blendMode: "ADD"
 		};
 		this.waterEmitter = this.waterParticles.createEmitter(config);
 		
@@ -172,6 +183,7 @@ class myScene extends Phaser.Scene {
 		this.key_RIGHT = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.RIGHT);
 		this.key_LEFT = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.LEFT);
 		this.key_UP = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.UP);
+		this.key_DOWN = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.DOWN);
 		this.key_R = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.R);
 		this.key_N = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.N);
 		this.key_W = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.W);
@@ -264,8 +276,9 @@ class myScene extends Phaser.Scene {
 			p.water = Math.min(p.targetWater, p.water);
 			if (p.water === 0 && !this.levelLost) {
 				this.levelLost = true;
-				var t = this.add.text(400, 100, "Oh no, a flower died!\nPress R to restart", {fontSize: "20px", color: "#ff0000"});
+				var t = this.add.text(400, 100, "Oh no, a flower died!\nPress R to restart", {fontSize: "20px", color: "#ff0000", fontFamily: "brothers"});
 				t.setOrigin(0.5);
+				AUDIO.ohno.play();
 			}
 			var gaugeHeight = 40;
 			var gaugeWidth = 10;
@@ -337,11 +350,11 @@ class myScene extends Phaser.Scene {
 			// level won
 			scene.add.image(400, 300, "levelend");
 			console.log("saving time " + Math.floor(t(this)) + " for level " + this.levelNo);
-			var newBestString = "Your time:\n" + timeString(t(this)) + "\n";
+			var newBestString = "Time: " + timeString(t(this)) + "\n";
 			var oldMedals = getMedalBeat(this.levelNo);
 			var m = 0;
 			while (m < oldMedals) {
-				this.add.image(340 + 40 * m, 180, "medal", m);
+				this.add.image(318 + 54 * m, 195, "medal", m);
 				++m;
 			}
 			var newMedals = oldMedals;
@@ -351,13 +364,16 @@ class myScene extends Phaser.Scene {
 				newMedals = getMedalBeat(this.levelNo);
 				newBestString +=  "New personal best!\n";
 			}
+			else if (this.bestTime) {
+				newBestString +=  "Your best time:\n" + timeString(this.bestTime) + "\n";
+			}
 			ajax.submit(time - this.startTime, this.levelNo, scene);
 			this.timeSaved = true;
 			var timeOut = 500;
 			while (m < newMedals) {
 				(function(m, timeOut) {
 					var medal = m;
-					setTimeout(function() {scene.add.image(340 + 40 * m, 180, "medal", medal), AUDIO["medal" + medal].play()}, timeOut);
+					setTimeout(function() {scene.add.image(318 + 54 * m, 195, "medal", medal), AUDIO["medal" + medal].play()}, timeOut);
 				})(m, timeOut);
 				timeOut += 500;
 				++m;
@@ -365,10 +381,10 @@ class myScene extends Phaser.Scene {
 			scene.add.text(400, 300, "Level complete!\n" + 
 			newBestString + 
 			(newMedals < 4 ? ("Beat " + timeString(MEDAL_TIMES[this.levelNo-1][newMedals]) + 
-			" for next medal\n") : "") + 
-			"press N for next level\n" + 
+			" for next medal!\n") : "") + 
+			"Press N for next level\n" + 
 			"Press R to try again", 
-			{fontSize: "20px", color: "#ffff00", align: "center"}).setOrigin(0.5);
+			{fontSize: "20px", color: "#ffff00", align: "center", fontFamily: "brothers"}).setOrigin(0.5);
 		}
 		
 		if (t(this) < 0) {
@@ -392,7 +408,7 @@ class myScene extends Phaser.Scene {
 			touch[d] = this.player.body.blocked[d];
 		}
 		
-		if (this.key_SPACE.isDown && this.waterLeft > 0) {
+		if ((this.key_SPACE.isDown || this.key_DOWN.isDown || this.key_W.isDonw) && this.waterLeft > 0) {
 			
 			var drops = Math.ceil(this.waterLeft / 100);
 			this.waterLeft -= drops;

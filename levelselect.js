@@ -24,14 +24,20 @@ class levelSelect extends Phaser.Scene {
 	}
 	
 	create() {
+		AUDIO.levelmusic.stop();
+		if (!AUDIO.menumusic.isPlaying) {
+			AUDIO.menumusic.play();
+		}
 		scene = this;
 		this.highScoreTexts = [];
 		
 		this.backgroundImage = this.add.image(0, 0, "levelselectBackground").setOrigin(0, 0);
-		scene.add.text(480, 280, "High scores");
+		var t = scene.add.text(480, 280, "High scores");
+		t.setFontFamily("brothers");
 		
 		for (var i = 0; i < 10; ++i) {
 			this.highScoreTexts[i] = this.add.text(480, 300 + 20 * i, "");
+			this.highScoreTexts[i].setFontFamily("brothers");
 		}
 		for (var levelNo = 1; levelNo <= LEVELAMT; ++levelNo) {
 			(function(level) {
@@ -39,11 +45,11 @@ class levelSelect extends Phaser.Scene {
 				var levelbutton = scene.add.image(80 + 80 * ((lev-1)%5), 200 + 40 * (Math.floor((lev-1)/5)), 'button', 0).setInteractive({cursor: "pointer"});
 				var bestTime = localStorage.getItem(GAME_PREF + lev);
 				var medalBeat = getMedalBeat(lev);
-				var text = scene.add.text(480, 250);
+				var text = scene.add.text(480, 220);
 				if (medalBeat > 0) {
 					var medal = scene.add.image(94 + 80 * ((lev-1)%5), 200 + 40 * (Math.floor((lev-1)/5)), 'medal', medalBeat - 1);
 				}
-				scene.add.text(levelbutton.getCenter().x - 10, levelbutton.getCenter().y, lev, {align: "right"}).setOrigin(0.5);
+				scene.add.text(levelbutton.getCenter().x - 10, levelbutton.getCenter().y, lev, {align: "right", fontFamily: "brothers"}).setOrigin(0.5);
 				levelbutton.on('pointerdown', function(pointer) {
 					scene.scene.start("myScene", {level: lev});
 				});
@@ -66,7 +72,7 @@ class levelSelect extends Phaser.Scene {
 							scene.highScoreTexts[i++].setText(h[0] + ": " + timeString(h[1]));
 						}
 					});
-					text.setText(s);
+					text.setText(s).setFontFamily("brothers");
 					levelbutton.setFrame(1);
 				});
 				levelbutton.on('pointerout', function(pointer) {
@@ -79,7 +85,7 @@ class levelSelect extends Phaser.Scene {
 			}(levelNo) );
 		}
 		var levelsButton = this.add.image(550, 150, 'button-big').setInteractive({cursor: "pointer"});
-		this.add.image(levelsButton.getCenter().x, levelsButton.getCenter().y, "Backtomenu");
+		this.add.image(levelsButton.getCenter().x, levelsButton.getCenter().y, "backtomenu");
 		levelsButton.on('pointerdown', function(pointer) {
 			this.scene.start("menuScene");
 		}, this);
