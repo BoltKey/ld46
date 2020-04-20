@@ -33,6 +33,7 @@ for (var i = 0; i < 15; ++i) {
 
 const game = new Phaser.Game(config);
 
+
 function createMuteButtons(scene) {
 	var mutesound = scene.add.image(700, 550, 'soundmute', 0 + 2 * soundMuted).setInteractive({cursor: "pointer"});
 	mutesound.on('pointerover', function(pointer) {

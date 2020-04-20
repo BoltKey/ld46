@@ -86,8 +86,8 @@
                         }, 
                         {
                          "name":"plant",
-                         "type":"bool",
-                         "value":true
+                         "type":"int",
+                         "value":3
                         }, 
                         {
                          "name":"startwater",

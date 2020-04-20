@@ -72,12 +72,10 @@ class menuScene extends Phaser.Scene {
 		}
 		
 		$("body").append(
-			$("<input type=text id='name-input' style='padding:3px; font-size:16px; border-width:2px; border-style:solid; color:#ffffff; background-color:#704700; border-color:#301a00; border-radius:8px; text-align:center; '>")
-			.css("position", "absolute")
-			.css("left", "480px")
-			.css("top", "150px")
-			.css("width", "150px")
-			.css("font-family", "brothers")
+			$("<input type=text id='name-input'>")
+			.css("top", $("canvas").position().top + 150)
+			.css("left", $("canvas").position().left + 470)
+			
 			.on("input", function(e) {ajax.rename(e.target.value)})
 		)
 		if (userName) {
