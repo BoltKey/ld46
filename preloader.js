@@ -39,7 +39,7 @@ class preloader extends Phaser.Scene {
 			frameHeight: 30
 		});
 		this.load.spritesheet("player", "assets/player.png", {
-			frameWidth: 40,
+			frameWidth: 50,
 			frameHeight: 40,
 			margin: 0,
 			spacing: 0

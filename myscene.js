@@ -92,7 +92,7 @@ class myScene extends Phaser.Scene {
 		});
 		this.anims.create({
 			key: "jump",
-			frames: this.anims.generateFrameNumbers("player", {start: 10, end: 10}),
+			frames: this.anims.generateFrameNumbers("player", {start: 8, end: 8}),
 			frameRate: 3,
 			repeat: -1
 		});
@@ -119,7 +119,7 @@ class myScene extends Phaser.Scene {
 		this.replayIndex = 0;
 		
 		this.player.setMaxVelocity(GROUND_MAXSPEED, FALL_MAXSPEED).
-		setSize(38, 38);
+		setSize(20, 38).setOffset(15, 0);
 		this.player.body.setAllowGravity(true);
 		
 		this.player.displayOriginX = 0.5; 
@@ -162,7 +162,7 @@ class myScene extends Phaser.Scene {
 						return true;
 					}
 					var pos = scene.player.body.position;
-					if (x > pos.x + 10 && x < pos.x + 30 && y > pos.y + 5 && y < pos.y + 20 && scene.waterLeft < scene.waterMax) {
+					if (x > pos.x - 4 && x < pos.x + 17 && y > pos.y + 5 && y < pos.y + 20 && scene.waterLeft < scene.waterMax) {
 						scene.waterLeft += 1;
 						return true;
 					}
@@ -571,7 +571,7 @@ class myScene extends Phaser.Scene {
 		}
 	}
 	updateWater() {
-		this.waterEmitter.setPosition(this.player.body.position.x + (this.player.flipX ? 5 : 35), this.player.body.position.y + 10);
+		this.waterEmitter.setPosition(this.player.body.position.x + (this.player.flipX ? -12 : 31), this.player.body.position.y + 8);
 		this.waterEmitter.setSpeedX({ min: this.player.body.velocity.x - 10, max: this.player.body.velocity.x + 10 });
 		this.waterEmitter.setSpeedY({ min: this.player.body.velocity.y - 10, max: this.player.body.velocity.y + 10 });
 		var bubbleMaxFrame = 9;
