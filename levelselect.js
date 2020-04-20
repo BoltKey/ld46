@@ -39,6 +39,7 @@ class levelSelect extends Phaser.Scene {
 			this.highScoreTexts[i] = this.add.text(480, 300 + 20 * i, "");
 			this.highScoreTexts[i].setFontFamily("brothers");
 		}
+		createMuteButtons(this);
 		for (var levelNo = 1; levelNo <= LEVELAMT; ++levelNo) {
 			(function(level) {
 				var lev = level;
@@ -63,9 +64,6 @@ class levelSelect extends Phaser.Scene {
 			" for next medal\n") : "")
 					scene.highScoreTexts[0].setText("loading scores...");
 					
-					for (var i = 0; i < 4; ++i) {
-						// medals or something
-					}
 					ajax.fetchScores(lev).then(function() {
 						var i = 0;
 						for (var h of highScores) {
@@ -84,6 +82,36 @@ class levelSelect extends Phaser.Scene {
 				
 			}(levelNo) );
 		}
+		if (allComplete()) {
+			var text = scene.add.text(480, 220);
+			var speedrunButton = this.add.image(300, 350, 'button-big').setInteractive({cursor: "pointer"});
+			speedrunButton.on('pointerover', function(pointer) {
+				speedrunButton.setFrame(1);
+				
+				var s = "";
+				if (localStorage.getItem(GAME_PREF + "speedrun")) {
+					s += "Your best time: " + timeString(localStorage.getItem(GAME_PREF + "speedrun")) + "\n";
+				}
+				text.setText(s).setFontFamily("brothers");
+				ajax.fetchScores(100).then(function() {
+					var i = 0;
+					for (var h of highScores) {
+						scene.highScoreTexts[i++].setText(h[0] + ": " + timeString(h[1]));
+					}
+				});
+			}, this);
+			speedrunButton.on('pointerout', function(pointer) {
+				speedrunButton.setFrame(0);
+				text.setText("");
+				scene.highScoreTexts.forEach(a => a.setText(""));
+			}, this);
+			this.add.text(speedrunButton.getCenter().x, speedrunButton.getCenter().y, "Speedrun", {fontFamily: "brothers", fontSize: 20}).setOrigin(0.5);
+			speedrunButton.on('pointerdown', function(pointer) {
+				speedrunStart = Date.now();
+				this.scene.start("myScene", {level: 1, speedrun: true});
+			}, this);
+		}
+		
 		var levelsButton = this.add.image(550, 150, 'button-big').setInteractive({cursor: "pointer"});
 		this.add.image(levelsButton.getCenter().x, levelsButton.getCenter().y, "backtomenu");
 		levelsButton.on('pointerdown', function(pointer) {

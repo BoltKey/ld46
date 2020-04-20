@@ -1,4 +1,5 @@
 var userName;
+var speedrunStart;
 class menuScene extends Phaser.Scene {
 	constructor() {
 		super("menuScene");
@@ -17,7 +18,9 @@ class menuScene extends Phaser.Scene {
 		if (!AUDIO.menumusic.isPlaying) {
 			AUDIO.menumusic.play();
 		}
+		
 		this.backgroundImage = this.add.image(0, 0, "menubackground").setOrigin(0, 0);
+		createMuteButtons(this);
 		var levelsButton = this.add.image(550, 100, 'button-big').setInteractive({cursor: "pointer"});
 		levelsButton.on('pointerover', function(pointer) {
 			levelsButton.setFrame(1);
@@ -53,6 +56,20 @@ class menuScene extends Phaser.Scene {
 		playButton.on('pointerdown', function(pointer) {
 			this.scene.start("myScene");
 		}, this);
+		if (allComplete()) {
+			var speedrunButton = this.add.image(550, 300, 'button-big').setInteractive({cursor: "pointer"});
+			speedrunButton.on('pointerover', function(pointer) {
+				speedrunButton.setFrame(1);
+			}, this);
+			speedrunButton.on('pointerout', function(pointer) {
+				speedrunButton.setFrame(0);
+			}, this);
+			this.add.text(speedrunButton.getCenter().x, speedrunButton.getCenter().y, "Speedrun", {fontFamily: "brothers", fontSize: 20}).setOrigin(0.5);
+			speedrunButton.on('pointerdown', function(pointer) {
+				speedrunStart = Date.now();
+				this.scene.start("myScene", {level: 1, speedrun: true});
+			}, this);
+		}
 		
 		$("body").append(
 			$("<input type=text id='name-input' style='padding:3px; font-size:16px; border-width:2px; border-style:solid; color:#ffffff; background-color:#704700; border-color:#301a00; border-radius:8px; text-align:center; '>")

@@ -78,6 +78,7 @@ class preloader extends Phaser.Scene {
 		
 		this.load.image("levelselect", "assets/levelselect.png");
 		this.load.image("backtomenu", "assets/backtomenu.png");
+		
 		this.load.image("watertext", "assets/watertext.png");
 		this.load.image("levelselectBackground", "assets/levelselectBackground.png");
 		this.load.image("levelend", "assets/levelend.png");
@@ -92,6 +93,14 @@ class preloader extends Phaser.Scene {
 		this.load.spritesheet("button", "assets/button.png", {
 			frameWidth: 60,
 			frameHeight: 30
+		});
+		this.load.spritesheet("soundmute", "assets/sound.png", {
+			frameWidth: 38,
+			frameHeight: 40
+		});
+		this.load.spritesheet("musicmute", "assets/music.png", {
+			frameWidth: 38,
+			frameHeight: 40
 		});
 		this.load.spritesheet("countdown", "assets/countdown.png", {
 			frameWidth: 150,

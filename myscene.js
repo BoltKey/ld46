@@ -17,6 +17,15 @@ function getColorScale(scale) {
 	return red * 256 * 256 + green * 256 + blue//"rgb(" + red + "," + green + ",0)";
 }
 
+function allComplete() {
+	for (var i = 1; i <= 15; ++i) {
+		if (localStorage.getItem(GAME_PREF + i) === null) {
+			return false;
+		}
+	}
+	return true;
+}
+
 function timeString(t) {
 	return Math.floor(t / 1000) + "." + ("" + Math.floor((Math.floor(Math.abs(t)))% 1000 / 10)).padStart(2, "0")  + "s";
 }
@@ -31,11 +40,11 @@ class myScene extends Phaser.Scene {
 	};
 	
 	init(data) {
-		const {level = 1, ghost=[]} = data;
+		const {level = 1, ghost=[], speedrun=false} = data;
 		this.levelNo = level;
 		this.environmentNo = Math.ceil(level / 5);
 		this.ghostData = ghost;
-		
+		this.speedrun = speedrun;
 	}
 	
 	create() {
@@ -52,7 +61,9 @@ class myScene extends Phaser.Scene {
 		this.timeText = this.add.text(32, 32);
 		this.timeText.setFontSize(30).setColor("#000000").setFontFamily("brothers");
 		
-		this.add.text(20, 550, "Level: " + this.levelNo, {fontFamily: "brothers", fontSize: "20px"});
+		this.add.text(20, 550, "Level: " + this.levelNo, {fontFamily: "brothers", fontSize: "20px"}).setDepth(8);
+		
+		this.nextEnd = false;
 		
 		this.countDown = this.add.image(400, 300, "countdown");
 		this.countDown.setOrigin(0.5).setDepth(12);
@@ -61,6 +72,8 @@ class myScene extends Phaser.Scene {
 		this.messageText.setDepth(19).setFontFamily("brothers").setColor("#f2ceaf");
 		this.messagePost = this.add.image(0, 0, "msgbg");
 		this.messagePost.setOrigin(0.5).setDepth(18).setAlpha(0);
+		
+		createMuteButtons(this);
 		
 		this.bubbles = [];
 		for (var i = 0; i < BUBBLE_AMT; ++i) {
@@ -135,7 +148,8 @@ class myScene extends Phaser.Scene {
 						if (p.water >= p.targetWater) {
 							if (!p.soundPlayed) {
 								p.soundPlayed = true;
-								AUDIO["flower" + Math.floor(Math.random() * 3)].play();
+								if (!soundMuted)
+									AUDIO["flower" + Math.floor(Math.random() * 3)].play();
 							}
 							p.setFrame(p.frame.name + 1);
 							if (scene.plants.children.entries.filter(a => a.water < a.targetWater).length === 0) {
@@ -190,12 +204,25 @@ class myScene extends Phaser.Scene {
 		this.key_S = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.S);
 		this.key_D = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.D);
 		this.key_SPACE = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
-		this.input.keyboard.on("keydown-N", function() {this.scene.start("myScene", {level: this.levelNo + 1})}, this);
+		this.input.keyboard.on("keydown-N", function() {
+			if (this.speedrun) {
+				return;
+			}
+			if (this.nextEnd) 
+				this.scene.start("complete"); 
+			else if (this.levelNo === 15)
+				this.scene.start("menuScene");
+			else
+				this.scene.start("myScene", {level: this.levelNo + 1})
+			
+			}, this);
 		
 		
 		AUDIO.walk.volume = 0;
 		AUDIO.walk.loop = true;
-		AUDIO.walk.play();
+		
+			AUDIO.walk.play();
+		
 	}
 	
 	loadMap() {
@@ -204,7 +231,6 @@ class myScene extends Phaser.Scene {
 		this.platforms = this.map.createStaticLayer("platforms", [terrain], 0, 0);
 		this.plantLayer = this.map.createDynamicLayer("plants", [terrain], 0, 0);
 		this.waterLayer = this.map.createDynamicLayer("water", [terrain], 0, 0);
-		this.textLayer = this.map.createDynamicLayer("text", [terrain], 0, 0);
 		this.backgroundLayer = this.map.createStaticLayer("background", [terrain], 0, 0);
 		
 		var scale = 1;
@@ -277,7 +303,9 @@ class myScene extends Phaser.Scene {
 				this.levelLost = true;
 				var t = this.add.text(400, 100, "Oh no, a flower died!\nPress R to restart", {fontSize: "20px", color: "#f35f87", fontFamily: "brothers"});
 				t.setOrigin(0.5);
-				AUDIO.ohno.play();
+				if (!soundMuted)
+					AUDIO.ohno.play();
+				
 			}
 			var gaugeHeight = 40;
 			var gaugeWidth = 10;
@@ -312,6 +340,7 @@ class myScene extends Phaser.Scene {
 			this.startTime = time + 1000;
 		}
 		function t(th) {
+			
 			return time - th.startTime;
 		}
 		if (!this.levelWon || !this.timeSaved) {
@@ -326,7 +355,9 @@ class myScene extends Phaser.Scene {
 					  ease: 'Power2'
 					}, this);
 				}
-				string = timeString(t(this));
+				
+					string = timeString(t(this));
+				
 				this.timeText.setPosition(32, 32);
 				this.timeText.setFontSize(30);
 				this.timeText.setOrigin(0);
@@ -342,11 +373,14 @@ class myScene extends Phaser.Scene {
 				//this.timeText.setOrigin(0.5);
 				
 			}
-			
+			if (this.speedrun) {
+				string = timeString(Date.now() - speedrunStart);
+			}
 			this.timeText.setText(string);
 		}
 		if (this.levelWon && !this.timeSaved) {
 			// level won
+			var allComp = allComplete();
 			scene.add.image(400, 300, "levelend");
 			console.log("saving time " + Math.floor(t(this)) + " for level " + this.levelNo);
 			var newBestString = "Time: " + timeString(t(this)) + "\n";
@@ -366,24 +400,60 @@ class myScene extends Phaser.Scene {
 			else if (this.bestTime) {
 				newBestString +=  "Your best time:\n" + timeString(this.bestTime) + "\n";
 			}
+			if (allComplete() && !allComp) {
+				this.nextEnd = true;
+			}
 			ajax.submit(time - this.startTime, this.levelNo, scene);
 			this.timeSaved = true;
 			var timeOut = 500;
-			while (m < newMedals) {
-				(function(m, timeOut) {
-					var medal = m;
-					setTimeout(function() {scene.add.image(318 + 54 * m, 195, "medal", medal), AUDIO["medal" + medal].play()}, timeOut);
-				})(m, timeOut);
-				timeOut += 500;
-				++m;
+			if (!this.speedrun) {
+				while (m < newMedals) {
+					(function(m, timeOut) {
+						var medal = m;
+						setTimeout(function() {scene.add.image(318 + 54 * m, 195, "medal", medal); if (!soundMuted) AUDIO["medal" + medal].play()}, timeOut);
+					})(m, timeOut);
+					timeOut += 500;
+					++m;
+				}
 			}
-			scene.add.text(400, 300, "Level complete!\n" + 
-			newBestString + 
-			(newMedals < 4 ? ("Beat " + timeString(MEDAL_TIMES[this.levelNo-1][newMedals]) + 
-			" for next medal!\n") : "") + 
-			"Press N for next level\n" + 
-			"Press R to try again", 
-			{fontSize: "20px", color: "#f2ceaf", align: "center", fontFamily: "brothers"}).setOrigin(0.5);
+			if (this.speedrun) {
+				var speedRunTime = Date.now() - speedrunStart;
+				scene.add.text(400, 300, "Speedrun complete!\n" + 
+				"Total time: " + timeString(speedRunTime) + "\n",
+				{fontSize: "20px", color: "#f2ceaf", align: "center", fontFamily: "brothers"}).setOrigin(0.5);
+				var levelsButton = this.add.image(400, 400, 'button-big').setInteractive({cursor: "pointer"}).setOrigin(0.5);
+				this.add.image(levelsButton.getCenter().x, levelsButton.getCenter().y, "backtomenu");
+				levelsButton.on('pointerdown', function(pointer) {
+					this.scene.start("menuScene");
+				}, this);
+				levelsButton.on('pointerover', function(pointer) {
+					levelsButton.setFrame(1);
+				}, this);
+				levelsButton.on('pointerout', function(pointer) {
+					levelsButton.setFrame(0);
+				}, this);
+				localStorage.setItem(GAME_PREF + "speedrun", speedRunTime);
+			}
+			else {
+				scene.add.text(400, 300, "Level complete!\n" + 
+				newBestString + 
+				(newMedals < 4 ? ("Beat " + timeString(MEDAL_TIMES[this.levelNo-1][newMedals]) + 
+				" for next medal!\n") : "") + 
+				"Press N for next level\n" + 
+				"Press R to try again", 
+				{fontSize: "20px", color: "#f2ceaf", align: "center", fontFamily: "brothers"}).setOrigin(0.5);
+			}
+			
+			if (this.speedrun) {
+				if (this.levelNo === 15) {
+					
+					ajax.submit(speedRunTime, 100, scene);
+					console.log("completed speedrun with time of " + speedRunTime);
+				}
+				else {
+					this.scene.start("myScene", {level: this.levelNo + 1, speedrun: true});
+				}
+			}
 		}
 		
 		if (t(this) < 0) {
@@ -396,7 +466,7 @@ class myScene extends Phaser.Scene {
 		this.player.body.setMaxVelocity(Math.min(GROUND_MAXSPEED, groundAccel), FALL_MAXSPEED);
 		var jumpStr = Math.min(JUMP_STR, groundAccel * 1.2 - 30);
 		if (this.key_R.isDown) {
-			this.scene.restart({level: this.levelNo, ghost: this.ghostData});
+			this.scene.restart({level: this.levelNo, ghost: this.ghostData, speedrun: this.speedrun});
 			return;
 		}
 		if (!this.player.body) {
@@ -426,7 +496,8 @@ class myScene extends Phaser.Scene {
 			if (touch.down) {
 				this.player.setVelocityY(-jumpStr);
 				this.player.anims.play("jump", true);
-				AUDIO.jump.play();
+				if (!soundMuted)
+					AUDIO.jump.play();
 				this.jumpStart = true;
 			}
 			else if (this.jumpStart) {
@@ -445,7 +516,8 @@ class myScene extends Phaser.Scene {
 				this.player.anims.play("run", true);
 				walk = true;
 				if (!this.walkSound) {
-					$(AUDIO.walk).animate({volume: 1}, 100);
+					if (!soundMuted)
+						$(AUDIO.walk).animate({volume: 1}, 100);
 					this.walkSound = true;
 				}
 				
@@ -463,7 +535,7 @@ class myScene extends Phaser.Scene {
 			if (this.player.body.velocity.x === 0 && !this.jumpStart) {
 				this.player.anims.play("idle", true);
 			}
-			if (this.airborne) {
+			if (this.airborne && !soundMuted) {
 				AUDIO.fall.play();
 			}
 			this.airborne = false;
