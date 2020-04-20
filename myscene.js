@@ -34,7 +34,7 @@ class myScene extends Phaser.Scene {
 	init(data) {
 		const {level = 1, ghost=[]} = data;
 		this.levelNo = level;
-		this.environmentNo = Math.ceil(level / 7);
+		this.environmentNo = Math.ceil(level / 5);
 		this.ghostData = ghost;
 		
 	}
@@ -49,6 +49,11 @@ class myScene extends Phaser.Scene {
 		this.timeText.setFontSize(30).setColor("#000000");
 		this.countDown = this.add.image(400, 300, "countdown");
 		this.countDown.setOrigin(0.5);
+		
+		this.messageText = this.add.text(0, 0);
+		this.messageText.setDepth(19);
+		this.messagePost = this.add.image(0, 0, "msgbg");
+		this.messagePost.setOrigin(0.5).setDepth(18).setAlpha(0);
 		
 		this.bubbles = [];
 		for (var i = 0; i < BUBBLE_AMT; ++i) {
@@ -103,6 +108,7 @@ class myScene extends Phaser.Scene {
 		this.player.displayOriginY = 0.5;
 		
 		this.player.setCollideWorldBounds(true);
+		
 		
 		this.loadMap();
 		var levelsButton = this.add.image(700, 20, 'button-big').setInteractive({cursor: "pointer"});
@@ -189,6 +195,7 @@ class myScene extends Phaser.Scene {
 		this.waterLayer = this.map.createDynamicLayer("water", [terrain], 0, 0);
 		this.textLayer = this.map.createDynamicLayer("text", [terrain], 0, 0);
 		this.backgroundLayer = this.map.createStaticLayer("background", [terrain], 0, 0);
+		
 		var scale = 1;
 		this.platforms.setScale(scale);
 		this.plantLayer.setScale(scale);
@@ -203,6 +210,20 @@ class myScene extends Phaser.Scene {
 		this.levelLost = false;
 		this.platforms.setCollisionBetween(1, 1000);
 		this.physics.add.collider(this.platforms, this.player);
+		this.physics.add.collider(this.player, this.backgroundLayer);
+		this.textDisplayed = false;
+		this.backgroundLayer.setTileIndexCallback([43], function(player, tile) {
+			scene.messageText.setText(tile.properties.message); 
+			var x = tile.getCenterX();
+			x = Math.min(600, Math.max(200, x));
+			var y = tile.getCenterY() + 130;
+			if (y > 500) {
+				y -= 280;
+			}
+			scene.messageText.setOrigin(0.5).setPosition(x, y).setAlign("center");
+			scene.messagePost.setPosition(x, y).setAlpha(1);
+			this.textDisplayed = true}, this);
+		this.backgroundLayer.setTileIndexCallback([-1], function(player, tile) {if (!this.textDisplayed) {scene.messageText.setText(""); this.messagePost.setAlpha(0);}}, this);
 		
 		this.plantLayer.forEachTile(tile => {
 			if (tile.properties.plant) {
@@ -224,7 +245,7 @@ class myScene extends Phaser.Scene {
 			
 			this.plantLayer.removeTileAt(tile.x, tile.y);
 		});
-		if (this.textLayer) {
+		/*if (this.textLayer) {
 			this.textLayer.forEachTile(tile => {
 				if (tile.properties.text) {
 					this.add.text(tile.getCenterX(), tile.getCenterY(), tile.properties.text);
@@ -233,7 +254,7 @@ class myScene extends Phaser.Scene {
 				
 				this.plantLayer.removeTileAt(tile.x, tile.y);
 			});
-		}
+		}*/
 	}
 	updatePlants(delta) {
 		this.plants.children.entries.forEach(p => {
@@ -298,7 +319,7 @@ class myScene extends Phaser.Scene {
 				this.timeText.setFontSize(30);
 				this.timeText.setOrigin(0);
 				if (this.bestTime) {
-					string += " (best: " + timeString(this.bestTime) + ")";
+					//string += " (best: " + timeString(this.bestTime) + ")";
 				}
 			}
 			else {
@@ -480,7 +501,7 @@ class myScene extends Phaser.Scene {
 		//is.waterText.setText("Water: " + this.waterLeft + "/" + this.waterMax);
 	}
 	update(time, delta) {
-		
+		this.textDisplayed = false;
 		if (!this.plants.children) 
 			return;
 		this.updatePlants(delta);

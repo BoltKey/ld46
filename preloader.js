@@ -36,6 +36,7 @@ class preloader extends Phaser.Scene {
 		this.load.image("background2", "assets/background2.png");
 		this.load.image("background3", "assets/background3.png");
 		this.load.image("menubackground", "assets/menubackground.png");
+		this.load.image("msgbg", "assets/messagebackground.png");
 		this.load.image("play", "assets/play.png");
 		
 		this.load.image("levelselect", "assets/levelselect.png");
