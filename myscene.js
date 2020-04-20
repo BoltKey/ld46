@@ -27,7 +27,6 @@ class myScene extends Phaser.Scene {
 	
 	preload() {
 		console.log("loading level scene");
-		this.load.tilemapTiledJSON("level" + this.levelNo, "levels/level" + this.levelNo + ".json");
 		$("#name-input").remove();
 	};
 	
@@ -56,16 +55,16 @@ class myScene extends Phaser.Scene {
 		this.add.text(20, 550, "Level: " + this.levelNo, {fontFamily: "brothers", fontSize: "20px"});
 		
 		this.countDown = this.add.image(400, 300, "countdown");
-		this.countDown.setOrigin(0.5);
+		this.countDown.setOrigin(0.5).setDepth(12);
 		
 		this.messageText = this.add.text(0, 0);
-		this.messageText.setDepth(19).setFontFamily("brothers");
+		this.messageText.setDepth(19).setFontFamily("brothers").setColor("#f2ceaf");
 		this.messagePost = this.add.image(0, 0, "msgbg");
 		this.messagePost.setOrigin(0.5).setDepth(18).setAlpha(0);
 		
 		this.bubbles = [];
 		for (var i = 0; i < BUBBLE_AMT; ++i) {
-			this.bubbles.push(this.add.image(380 + 18 * i, 10 + 10 * (i%2), "bubble", 0));
+			this.bubbles.push(this.add.image(380 + 18 * i, 15 + 10 * (i%2), "bubble", 0));
 			this.bubbles[i].depth = 11;
 		}
 		
@@ -276,7 +275,7 @@ class myScene extends Phaser.Scene {
 			p.water = Math.min(p.targetWater, p.water);
 			if (p.water === 0 && !this.levelLost) {
 				this.levelLost = true;
-				var t = this.add.text(400, 100, "Oh no, a flower died!\nPress R to restart", {fontSize: "20px", color: "#ff0000", fontFamily: "brothers"});
+				var t = this.add.text(400, 100, "Oh no, a flower died!\nPress R to restart", {fontSize: "20px", color: "#f35f87", fontFamily: "brothers"});
 				t.setOrigin(0.5);
 				AUDIO.ohno.play();
 			}
@@ -384,7 +383,7 @@ class myScene extends Phaser.Scene {
 			" for next medal!\n") : "") + 
 			"Press N for next level\n" + 
 			"Press R to try again", 
-			{fontSize: "20px", color: "#ffff00", align: "center", fontFamily: "brothers"}).setOrigin(0.5);
+			{fontSize: "20px", color: "#f2ceaf", align: "center", fontFamily: "brothers"}).setOrigin(0.5);
 		}
 		
 		if (t(this) < 0) {

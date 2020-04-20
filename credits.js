@@ -37,7 +37,7 @@ class credits extends Phaser.Scene {
 			"level design, sound effects:\n" + 
 			"BoltKey (https://boltkey.cz)\n\n" +
 			"Illustrations, graphic design:\n" + 
-			"Klára Spanelová\n\n" + 
+			"Klára Spanelová\n(https://klaraspanelova.tumblr.com/, \n @obrazyatak on instagram)\n\n" + 
 			"Music by Kevin the C..-\n" + 
 			"I mean Kevin MacLeod:\n" + 
 			"Easy Lemon\n" +

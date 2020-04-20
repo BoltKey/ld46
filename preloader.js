@@ -14,6 +14,7 @@ class preloader extends Phaser.Scene {
 		progressBox.fillRect(240, 270, 320, 50);
 		console.log("loading");
 		this.loadText = this.add.text(400, 278, "Loading", {fontFamily: "brothers", align: "center"}).setOrigin(0.5);
+		this.fileText = this.add.text(400, 340, "file", {fontFamily: "brothers", align: "center"}).setOrigin(0.5);
 		this.load.on('progress', function (value) {
 			if (this.loadText)
 				this.loadText.setText("Loading\n\n" + Math.floor(value * 100) + "%");
@@ -24,7 +25,9 @@ class preloader extends Phaser.Scene {
 					
 		this.load.on('fileprogress', function (file) {
 			console.log(file.src);
-		});
+			if (this.fileText)
+				this.fileText.setText(file.src);
+		}, this);
 		 
 		this.load.on('complete', function () {
 			console.log('complete');
@@ -54,6 +57,10 @@ class preloader extends Phaser.Scene {
 		this.load.audio("ohno", "assets/ohno.wav");
 		this.load.audio("levelmusic", "assets/music_level.mp3");
 		this.load.audio("menumusic", "assets/music_menu.mp3");
+		
+		for (var level = 1; level <= 15; ++level)
+			this.load.tilemapTiledJSON("level" + level, "levels/level" + level + ".json");
+		
 		
 		this.load.image("tileset1", "assets/tileset1.png");
 		this.load.image("tileset2", "assets/tileset2.png");
